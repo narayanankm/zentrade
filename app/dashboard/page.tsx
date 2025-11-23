@@ -1,13 +1,16 @@
 'use client';
 
 import { useFyersAuth, useFyersLogout } from '@/hooks/use-fyers-auth';
-import { useFyersProfile } from '@/hooks/use-fyers-portfolio';
+import { useFyersProfile, useFyersPositions, useFyersHoldings, useFyersFunds } from '@/hooks/use-fyers-portfolio';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function DashboardPage() {
   const { data: session, isLoading: sessionLoading } = useFyersAuth();
   const { data: profile } = useFyersProfile(session?.authenticated || false);
+  const { data: positions } = useFyersPositions(session?.authenticated || false);
+  const { data: holdings } = useFyersHoldings(session?.authenticated || false);
+  const { data: funds } = useFyersFunds(session?.authenticated || false);
   const logout = useFyersLogout();
   const router = useRouter();
 
@@ -57,136 +60,196 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6">
-          {/* Welcome Card */}
-          <div className="p-6 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-            <h2 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">
-              Welcome to Zentrade
-            </h2>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Your Fyers API v3 integration is ready! Here's what you can do next:
-            </p>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FeatureCard
-              title="Market Data"
-              description="View real-time quotes, market depth, and historical data for stocks and indices."
-              status="Ready"
+          {/* Portfolio Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SummaryCard
+              title="Total P&L"
+              value={formatCurrency((positions?.overall?.pl_total || 0) + (holdings?.overall?.total_pnl || 0))}
+              change={(positions?.overall?.pl_total || 0) + (holdings?.overall?.total_pnl || 0)}
+              icon="💰"
             />
-            <FeatureCard
-              title="Order Placement"
-              description="Place, modify, and cancel orders with market and limit order types."
-              status="Ready"
+            <SummaryCard
+              title="Open Positions"
+              value={positions?.overall?.count_open?.toString() || '0'}
+              subtitle={`Unrealized: ${formatCurrency(positions?.overall?.pl_unrealized || 0)}`}
+              icon="📊"
             />
-            <FeatureCard
-              title="Portfolio"
-              description="Track your positions, holdings, and fund limits in real-time."
-              status="Ready"
+            <SummaryCard
+              title="Holdings Value"
+              value={formatCurrency(holdings?.overall?.total_current_value || 0)}
+              subtitle={`Investment: ${formatCurrency(holdings?.overall?.total_investment || 0)}`}
+              icon="💼"
             />
-            <FeatureCard
-              title="Watchlist"
-              description="Create and manage your personalized watchlist of symbols."
-              status="Pending"
-            />
-            <FeatureCard
-              title="Charts"
-              description="View historical price charts with multiple timeframes."
-              status="Pending"
-            />
-            <FeatureCard
-              title="WebSocket"
-              description="Get real-time updates via WebSocket connection."
-              status="Pending"
+            <SummaryCard
+              title="Available Funds"
+              value={formatCurrency(funds?.fund_limit?.[0]?.equityAmount || 0)}
+              subtitle="Equity"
+              icon="💵"
             />
           </div>
 
-          {/* API Status */}
+          {/* Positions Section */}
           <div className="p-6 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
             <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
-              API Status
+              Positions
             </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-600 dark:text-zinc-400">Environment:</span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                  Paper Trading
-                </span>
+            {positions?.netPositions && positions.netPositions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-zinc-200 dark:border-zinc-800">
+                    <tr className="text-left">
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Symbol</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Qty</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Avg Price</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">LTP</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">P&L</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {positions.netPositions.map((position) => (
+                      <tr key={position.id} className="text-zinc-900 dark:text-zinc-100">
+                        <td className="py-3 font-medium">{position.symbol}</td>
+                        <td className="py-3">{position.netQty}</td>
+                        <td className="py-3">{formatCurrency(position.avgPrice)}</td>
+                        <td className="py-3">{formatCurrency(position.ltp)}</td>
+                        <td className={`py-3 font-medium ${position.pl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {formatCurrency(position.pl)}
+                        </td>
+                        <td className="py-3 text-xs">
+                          <span className="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800">
+                            {position.productType}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-zinc-600 dark:text-zinc-400">Session Status:</span>
-                <span className="inline-flex items-center gap-1.5 font-medium text-green-600 dark:text-green-400">
-                  <span className="w-2 h-2 rounded-full bg-green-600 dark:bg-green-400"></span>
-                  Active
-                </span>
+            ) : (
+              <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
+                No open positions
               </div>
-              {session.expiresAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-zinc-600 dark:text-zinc-400">Expires:</span>
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {new Date(session.expiresAt).toLocaleString()}
-                  </span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* Next Steps */}
-          <div className="p-6 rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-800 dark:from-zinc-800 dark:to-zinc-900 text-white">
-            <h3 className="text-lg font-semibold mb-3">Next Steps</h3>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-zinc-400">1.</span>
-                <span>Build UI components for market data display (watchlist, quotes)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-zinc-400">2.</span>
-                <span>Create order placement forms with validation</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-zinc-400">3.</span>
-                <span>Add portfolio visualization (positions, holdings, P&L)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-zinc-400">4.</span>
-                <span>Integrate WebSocket for real-time updates</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-zinc-400">5.</span>
-                <span>Add charts using a charting library (e.g., lightweight-charts)</span>
-              </li>
-            </ul>
+          {/* Holdings Section */}
+          <div className="p-6 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+            <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
+              Holdings
+            </h3>
+            {holdings?.holdings && holdings.holdings.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-zinc-200 dark:border-zinc-800">
+                    <tr className="text-left">
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Symbol</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Qty</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Avg Cost</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">LTP</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">Current Value</th>
+                      <th className="pb-3 font-medium text-zinc-600 dark:text-zinc-400">P&L</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {holdings.holdings.map((holding) => (
+                      <tr key={holding.fyToken} className="text-zinc-900 dark:text-zinc-100">
+                        <td className="py-3 font-medium">{holding.symbol}</td>
+                        <td className="py-3">{holding.quantity}</td>
+                        <td className="py-3">{formatCurrency(holding.costPrice)}</td>
+                        <td className="py-3">{formatCurrency(holding.ltp)}</td>
+                        <td className="py-3">{formatCurrency(holding.marketVal)}</td>
+                        <td className={`py-3 font-medium ${holding.pnl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {formatCurrency(holding.pnl)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
+                No holdings
+              </div>
+            )}
           </div>
+
+          {/* Funds Section */}
+          {funds?.fund_limit && funds.fund_limit.length > 0 && (
+            <div className="p-6 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
+                Fund Limits
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {funds.fund_limit.map((fund) => (
+                  <div key={fund.id} className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900">
+                    <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
+                      {fund.title}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">Equity:</span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          {formatCurrency(fund.equityAmount)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">Commodity:</span>
+                        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          {formatCurrency(fund.commodityAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
   );
 }
 
-function FeatureCard({
+function SummaryCard({
   title,
-  description,
-  status,
+  value,
+  subtitle,
+  change,
+  icon,
 }: {
   title: string;
-  description: string;
-  status: 'Ready' | 'Pending';
+  value: string;
+  subtitle?: string;
+  change?: number;
+  icon?: string;
 }) {
   return (
     <div className="p-4 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
       <div className="flex items-start justify-between mb-2">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
-        <span
-          className={`text-xs px-2 py-1 rounded ${
-            status === 'Ready'
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-          }`}
-        >
-          {status}
-        </span>
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">{title}</div>
+        {icon && <div className="text-2xl">{icon}</div>}
       </div>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+      <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+        {value}
+      </div>
+      {subtitle && (
+        <div className="text-xs text-zinc-500 dark:text-zinc-500">{subtitle}</div>
+      )}
+      {change !== undefined && (
+        <div className={`text-xs font-medium mt-1 ${change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {change >= 0 ? '↑' : '↓'} {Math.abs(change).toFixed(2)}
+        </div>
+      )}
     </div>
   );
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
