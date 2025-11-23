@@ -50,6 +50,13 @@ export default function Home() {
             {login.isPending ? 'Connecting...' : 'Login with Fyers'}
           </button>
 
+          <a
+            href="/auth/manual"
+            className="w-full h-12 px-6 rounded-lg border-2 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center"
+          >
+            Manual Authentication
+          </a>
+
           {login.isError && (
             <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
               {login.error?.message || 'Failed to login. Please try again.'}
