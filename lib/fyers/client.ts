@@ -3,7 +3,7 @@
  * Handles authentication, API calls, and error handling
  */
 
-import { fyersModel } from 'fyers-api-v3';
+import * as fyersAPI from 'fyers-api-v3';
 import type {
   FyersAuthConfig,
   FyersAccessToken,
@@ -28,7 +28,10 @@ export class FyersClient {
 
   constructor(config: FyersAuthConfig) {
     this.config = config;
-    this.fyers = new fyersModel.FyersModel();
+    // Handle both CJS and ESM module formats
+    const fyersModel = (fyersAPI as any).fyersModel || fyersAPI;
+    const FyersModel = fyersModel.FyersModel || fyersModel.default?.FyersModel;
+    this.fyers = new FyersModel();
   }
 
   /**
