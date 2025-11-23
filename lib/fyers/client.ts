@@ -3,7 +3,6 @@
  * Handles authentication, API calls, and error handling
  */
 
-import * as fyersAPI from 'fyers-api-v3';
 import type {
   FyersAuthConfig,
   FyersAccessToken,
@@ -28,20 +27,22 @@ export class FyersClient {
 
   constructor(config: FyersAuthConfig) {
     this.config = config;
-    // Handle both CJS and ESM module formats
-    const fyersModel = (fyersAPI as any).fyersModel || fyersAPI;
-    const FyersModel = fyersModel.FyersModel || fyersModel.default?.FyersModel;
-    this.fyers = new FyersModel();
+    // Dynamically require fyers-api-v3 to handle CJS module in Next.js
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { fyersModel } = require('fyers-api-v3');
+    this.fyers = new fyersModel({
+      AppID: this.config.appId,
+      RedirectURL: this.config.redirectUri,
+      enableLogging: false,
+    });
   }
 
   /**
    * Generate authorization URL for OAuth flow
    */
   generateAuthUrl(state: string = 'sample_state'): string {
-    this.fyers.setAppId(this.config.appId);
-    this.fyers.setRedirectUrl(this.config.redirectUri);
-
-    const authUrl = this.fyers.generateAuthCode();
+    // AppID and RedirectURL already set in constructor
+    const authUrl = this.fyers.generateAuthCode({ state });
     return authUrl;
   }
 
@@ -50,9 +51,6 @@ export class FyersClient {
    */
   async generateAccessToken(authCode: string): Promise<FyersAccessToken> {
     try {
-      this.fyers.setAppId(this.config.appId);
-      this.fyers.setSecret(this.config.secretKey);
-
       const response = await this.fyers.generate_access_token({
         client_id: this.config.appId,
         secret_key: this.config.secretKey,
