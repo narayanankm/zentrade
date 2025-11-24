@@ -4,19 +4,11 @@ const nextConfig: NextConfig = {
   // Use standalone output to include all node_modules
   output: 'standalone',
 
-  // Configure webpack to handle fyers-api-v3 as external
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Mark fyers-api-v3 as external so it's loaded from node_modules
-      config.externals = config.externals || [];
-      if (Array.isArray(config.externals)) {
-        config.externals.push('fyers-api-v3');
-      }
-    }
-    return config;
-  },
+  // Mark fyers-api-v3 as a server-side external package
+  // This prevents Next.js from trying to bundle it
+  serverExternalPackages: ['fyers-api-v3'],
 
-  // Empty turbopack config to silence warning
+  // Empty turbopack config to acknowledge Turbopack is being used
   turbopack: {},
 };
 
