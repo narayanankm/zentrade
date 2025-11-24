@@ -27,10 +27,10 @@ export class FyersClient {
 
   constructor(config: FyersAuthConfig) {
     this.config = config;
-    // Dynamically require fyers-api-v3 to handle CJS module in Next.js
+    // Use our wrapper to load only the API service, avoiding problematic websocket modules
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { fyersModel } = require('fyers-api-v3');
-    this.fyers = new fyersModel({
+    const { FyersApi } = require('./api-wrapper.js');
+    this.fyers = new FyersApi({
       AppID: this.config.appId,
       RedirectURL: this.config.redirectUri,
       enableLogging: false,
