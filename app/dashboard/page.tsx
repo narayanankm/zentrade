@@ -4,6 +4,7 @@ import { useFyersAuth, useFyersLogout } from '@/hooks/use-fyers-auth';
 import { useFyersProfile, useFyersPositions, useFyersHoldings, useFyersFunds } from '@/hooks/use-fyers-portfolio';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { data: session, isLoading: sessionLoading } = useFyersAuth();
@@ -60,13 +61,21 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <button
-            onClick={() => logout.mutate()}
-            disabled={logout.isPending}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
-          >
-            {logout.isPending ? 'Logging out...' : 'Logout'}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/trade"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+            >
+              Trade
+            </Link>
+            <button
+              onClick={() => logout.mutate()}
+              disabled={logout.isPending}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+            >
+              {logout.isPending ? 'Logging out...' : 'Logout'}
+            </button>
+          </div>
         </div>
       </header>
 
