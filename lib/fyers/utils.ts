@@ -206,7 +206,16 @@ export function formatTimestamp(
   timestamp: number | string,
   includeTime: boolean = true
 ): string {
-  const date = new Date(typeof timestamp === 'string' ? timestamp : timestamp * 1000);
+  let dateValue: number | string = timestamp;
+
+  // Handle numeric timestamps - detect if in seconds or milliseconds
+  if (typeof timestamp === 'number') {
+    // Timestamps < 10000000000 are in seconds (before ~Nov 2286)
+    // Timestamps >= 10000000000 are in milliseconds
+    dateValue = timestamp < 10000000000 ? timestamp * 1000 : timestamp;
+  }
+
+  const date = new Date(dateValue);
 
   if (includeTime) {
     return date.toLocaleString('en-IN', {
