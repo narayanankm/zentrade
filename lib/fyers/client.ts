@@ -27,14 +27,24 @@ export class FyersClient {
 
   constructor(config: FyersAuthConfig) {
     this.config = config;
-    // Dynamically require fyers-api-v3 to handle CJS module in Next.js
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { fyersModel } = require('fyers-api-v3');
-    this.fyers = new fyersModel({
-      AppID: this.config.appId,
-      RedirectURL: this.config.redirectUri,
-      enableLogging: false,
-    });
+    try {
+      console.log('[FyersClient] Loading API wrapper...');
+      // Use our wrapper to load only the API service, avoiding problematic websocket modules
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { FyersApi } = require('./api-wrapper.js');
+
+      console.log('[FyersClient] Creating Fyers API instance...');
+      this.fyers = new FyersApi({
+        AppID: this.config.appId,
+        RedirectURL: this.config.redirectUri,
+        enableLogging: false,
+      });
+
+      console.log('[FyersClient] Fyers client initialized successfully');
+    } catch (error) {
+      console.error('[FyersClient] Error initializing client:', error);
+      throw error;
+    }
   }
 
   /**
