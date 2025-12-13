@@ -47,8 +47,14 @@ export default function Home() {
             disabled={login.isPending}
             className="w-full h-12 px-6 rounded-lg bg-zinc-900 text-white font-medium hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {login.isPending ? 'Connecting...' : 'Login with Fyers'}
+            {login.isPending ? 'Authenticating...' : 'Login with Fyers'}
           </button>
+
+          {login.isPending && (
+            <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm text-center">
+              Please complete authentication in the popup window
+            </div>
+          )}
 
           <a
             href="/auth/manual"
