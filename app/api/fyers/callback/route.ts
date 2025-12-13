@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    // Redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Redirect to success page (which will close the popup or redirect to dashboard)
+    return NextResponse.redirect(new URL('/auth/success', request.url));
   } catch (error) {
     console.error('Error in OAuth callback:', error);
 
