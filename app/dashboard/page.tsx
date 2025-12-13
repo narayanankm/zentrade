@@ -4,15 +4,29 @@ import { useFyersAuth, useFyersLogout } from '@/hooks/use-fyers-auth';
 import { useFyersProfile, useFyersPositions, useFyersHoldings, useFyersFunds } from '@/hooks/use-fyers-portfolio';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { data: session, isLoading: sessionLoading } = useFyersAuth();
-  const { data: profile } = useFyersProfile(session?.authenticated || false);
-  const { data: positions } = useFyersPositions(session?.authenticated || false);
-  const { data: holdings } = useFyersHoldings(session?.authenticated || false);
-  const { data: funds } = useFyersFunds(session?.authenticated || false);
+  const { data: profile, error: profileError, isLoading: profileLoading } = useFyersProfile(session?.authenticated || false);
+  const { data: positions, error: positionsError, isLoading: positionsLoading } = useFyersPositions(session?.authenticated || false);
+  const { data: holdings, error: holdingsError, isLoading: holdingsLoading } = useFyersHoldings(session?.authenticated || false);
+  const { data: funds, error: fundsError, isLoading: fundsLoading } = useFyersFunds(session?.authenticated || false);
   const logout = useFyersLogout();
   const router = useRouter();
+
+  // Debug logging
+  useEffect(() => {
+    if (session?.authenticated) {
+      console.log('Dashboard data:', {
+        profile,
+        positions,
+        holdings,
+        funds,
+        errors: { profileError, positionsError, holdingsError, fundsError }
+      });
+    }
+  }, [session, profile, positions, holdings, funds, profileError, positionsError, holdingsError, fundsError]);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -47,19 +61,42 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <button
-            onClick={() => logout.mutate()}
-            disabled={logout.isPending}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
-          >
-            {logout.isPending ? 'Logging out...' : 'Logout'}
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/trade"
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+            >
+              Trade
+            </Link>
+            <button
+              onClick={() => logout.mutate()}
+              disabled={logout.isPending}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+            >
+              {logout.isPending ? 'Logging out...' : 'Logout'}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-6">
+          {/* Debug Panel - Show API errors */}
+          {(profileError || positionsError || holdingsError || fundsError) && (
+            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+              <h3 className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">
+                API Errors Detected
+              </h3>
+              <div className="text-xs space-y-1 text-red-700 dark:text-red-300">
+                {profileError && <div>Profile: {String(profileError)}</div>}
+                {positionsError && <div>Positions: {String(positionsError)}</div>}
+                {holdingsError && <div>Holdings: {String(holdingsError)}</div>}
+                {fundsError && <div>Funds: {String(fundsError)}</div>}
+              </div>
+            </div>
+          )}
+
           {/* Portfolio Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <SummaryCard

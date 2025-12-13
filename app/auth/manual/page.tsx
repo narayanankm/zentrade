@@ -15,8 +15,14 @@ export default function ManualAuthPage() {
     setError('');
 
     try {
+      // Normalize the URL by adding https:// if missing
+      let normalizedUrl = url.trim();
+      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+        normalizedUrl = 'https://' + normalizedUrl;
+      }
+
       // Extract auth_code from the URL
-      const urlObj = new URL(url);
+      const urlObj = new URL(normalizedUrl);
       const authCode = urlObj.searchParams.get('auth_code');
       const state = urlObj.searchParams.get('state');
 
