@@ -189,18 +189,24 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {holdings.holdings.map((holding) => (
-                      <tr key={holding.fyToken} className="text-zinc-900 dark:text-zinc-100">
-                        <td className="py-3 font-medium">{holding.symbol}</td>
-                        <td className="py-3">{holding.quantity}</td>
-                        <td className="py-3">{formatCurrency(holding.costPrice)}</td>
-                        <td className="py-3">{formatCurrency(holding.ltp)}</td>
-                        <td className="py-3">{formatCurrency(holding.marketVal)}</td>
-                        <td className={`py-3 font-medium ${holding.pnl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {formatCurrency(holding.pnl)}
-                        </td>
-                      </tr>
-                    ))}
+                    {holdings.holdings.map((holding) => {
+                      // Calculate P&L: Market Value - Investment (Cost Price × Quantity)
+                      const investment = holding.costPrice * holding.quantity;
+                      const pnl = holding.pnl || (holding.marketVal - investment);
+
+                      return (
+                        <tr key={holding.fyToken} className="text-zinc-900 dark:text-zinc-100">
+                          <td className="py-3 font-medium">{holding.symbol}</td>
+                          <td className="py-3">{holding.quantity}</td>
+                          <td className="py-3">{formatCurrency(holding.costPrice)}</td>
+                          <td className="py-3">{formatCurrency(holding.ltp)}</td>
+                          <td className="py-3">{formatCurrency(holding.marketVal)}</td>
+                          <td className={`py-3 font-medium ${pnl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {formatCurrency(pnl)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
