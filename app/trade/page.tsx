@@ -5,6 +5,8 @@ import { usePlaceOrder, useFyersQuotes, useFyersOrders } from '@/hooks/use-fyers
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { SymbolAutocomplete } from '@/components/ui/symbol-autocomplete';
+import type { SymbolData } from '@/lib/data/symbols';
 
 export default function TradePage() {
   const { data: session, isLoading: sessionLoading } = useFyersAuth();
@@ -105,11 +107,14 @@ export default function TradePage() {
                   Symbol
                 </label>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
+                  <SymbolAutocomplete
                     value={symbol}
-                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                    placeholder="e.g., NSE:SBIN-EQ"
+                    onChange={setSymbol}
+                    onSelect={(symbolData: SymbolData) => {
+                      setSymbol(symbolData.symbol);
+                      setShowQuote(true);
+                    }}
+                    placeholder="Type TCS, RELIANCE, ITC..."
                     className="flex-1 px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
@@ -122,7 +127,7 @@ export default function TradePage() {
                   </button>
                 </div>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Format: EXCHANGE:SYMBOL-TYPE (e.g., NSE:RELIANCE-EQ, NSE:NIFTY50-INDEX)
+                  Type a symbol name (e.g., TCS, WIPRO, ITC) or full format (NSE:RELIANCE-EQ)
                 </p>
               </div>
 
